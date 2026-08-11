@@ -1,3 +1,34 @@
+---
+
+## ☁️ Estratégia de Deploy em Nuvem (Batch vs. Real-Time)
+
+### 🎯 Tipo de Inferência: Real-Time (Tempo Real)
+A solução atual foi desenhada para inferência **Real-Time**. 
+
+* **Justificativa:** Como o objetivo é servir previsões sob demanda para resumos médicos (*abstracts*) via requisições HTTP (`POST /predict`), o modelo precisa estar permanentemente disponível e responder com baixíssima latência (medida em **~8.87 ms** no container Docker).
+* **Quando usar Batch?** O processamento em lote (*batch*) só seria recomendado caso houvesse a necessidade de classificar um grande volume de artigos históricos de uma única vez (ex.: processar milhões de registros durante a noite).
+
+---
+
+### 🚀 Recomendação de Infraestrutura em Nuvem (AWS / GCP / Azure)
+
+Para este projeto, a provedora recomendada é a **AWS** (ou equivalentemente **GCP/Azure**), utilizando serviços gerenciados e serverless para otimizar custos e manutenção:
+
+#### Opção A: Serverless com AWS Lambda + Amazon ECR (Recomendado para início/baixo custo)
+* **Arquitetura:** Empacotar a imagem Docker da API no **Amazon ECR** e executá-la através do **AWS Lambda** integrado ao **Amazon API Gateway**.
+* **Vantagens:** 
+  * Custo zero enquanto não houver requisições (cobrança por milissegundos de execução).
+  * Auto-scaling automático conforme a demanda de requisições aumenta.
+  * O footprint do modelo (`TF-IDF + Logistic Regression`) é extremamente leve e roda perfeitamente em limites serverless.
+
+#### Opção B: Containers Gerenciados com AWS App Runner / Amazon ECS (Recomendado para tráfego constante)
+* **Arquitetura:** Subir a imagem Docker diretamente no **AWS App Runner** ou **Amazon ECS (Fargate)**.
+* **Vantagens:**
+  * Mantém o container sempre quente (*warm start*), eliminando latências iniciais (*cold start*).
+  * Ideal para ambientes hospitalares ou clínicas onde o fluxo de consultas de textos médicos ocorre durante todo o dia útil.
+
+  ---
+
 # 🩺 Medical Abstract Classifier API
 
 ```text
