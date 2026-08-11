@@ -3,10 +3,11 @@
 ## ☁️ Estratégia de Deploy em Nuvem (Batch vs. Real-Time)
 
 ### 🎯 Tipo de Inferência: Real-Time (Tempo Real)
-A solução atual foi desenhada para inferência **Real-Time**. 
-
-* **Justificativa:** Como o objetivo é servir previsões sob demanda para resumos médicos (*abstracts*) via requisições HTTP (`POST /predict`), o modelo precisa estar permanentemente disponível e responder com baixíssima latência (medida em **~8.87 ms** no container Docker).
-* **Quando usar Batch?** O processamento em lote (*batch*) só seria recomendado caso houvesse a necessidade de classificar um grande volume de artigos históricos de uma única vez (ex.: processar milhões de registros durante a noite).
+resposta: |
+  A solução atual foi desenhada para inferência Real-Time. 
+  
+  * Justificativa: Como o objetivo é servir previsões sob demanda para resumos médicos (abstracts) via requisições HTTP (POST /predict), o modelo precisa estar permanentemente disponível e responder com baixíssima latência (medida em ~8.87 ms no container Docker).
+  * Quando usar Batch? O processamento em lote (batch) só seria recomendado caso houvesse a necessidade de classificar um grande volume de artigos históricos de uma única vez (ex.: processar milhões de registros durante a noite).
 
 ---
 
