@@ -114,5 +114,6 @@ docker run -d -p 8000:8000 --name medical_api_container medical-classifier-api
 
 ### 4. Rodar o Benchmark de Latência
 ```bash
+pip install requests
 python scripts/benchmark.py
 ```
