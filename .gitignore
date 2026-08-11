@@ -1,0 +1,6 @@
+.venv/
+venv/
+.history/
+__pycache__/
+*.pkl
+.pytest_cache/
