@@ -8,6 +8,7 @@ on:
 
 env:
   PYTHON_VERSION: "3.11"
+  PYTHONPATH: ${{ github.workspace }}
 
 jobs:
   validacao-ambiente:
@@ -32,7 +33,7 @@ jobs:
 
       - name: Rodar Lint (Ruff)
         run: |
-           ruff check . --select F,E
+          ruff check . --select F,E
 
       - name: Rodar Testes (Pytest)
         run: |
