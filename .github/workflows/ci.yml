@@ -32,7 +32,7 @@ jobs:
 
       - name: Rodar Lint (Ruff)
         run: |
-          ruff check .
+           ruff check . --select F,E
 
       - name: Rodar Testes (Pytest)
         run: |
