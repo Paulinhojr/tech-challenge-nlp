@@ -117,3 +117,83 @@ docker run -d -p 8000:8000 --name medical_api_container medical-classifier-api
 pip install requests
 python scripts/benchmark.py
 ```
+### 🚀 Integração Contínua (CI) — Medical Text Classification API
+
+Este repositório utiliza **GitHub Actions** para automatizar o pipeline de **Integração Contínua (CI)**. O objetivo é garantir que as atualizações da API de classificação de textos médicos e dos modelos de Machine Learning sejam testadas e validadas automaticamente antes de integrarem a versão final.
+
+Por padrão, o workflow é acionado automaticamente a cada alteração enviada (`push`) para a branch `main`.
+
+### 🛠️ Como Forçar a Execução do Pipeline Manualmente
+
+Caso seja necessário testar a esteira de CI/CD para validar as configurações, sem realizar alterações no código da aplicação, é possível utilizar um **commit vazio (`empty commit`)**.
+
+Siga os passos abaixo no terminal integrado do VS Code.
+
+#### 1. Clonar o repositório
+
+Caso o projeto ainda não esteja disponível localmente:
+
+```bash
+git clone https://github.com/Paulinhojr/tech-challenge-nlp.git
+````
+
+Acessar a pasta do projeto
+
+````bash
+cd tech-challenge-nlp
+````
+
+Adicionar os arquivos ao staging
+
+````bash
+git add .
+````
+Criar o commit de acionamento
+
+O parâmetro --allow-empty permite criar um commit sem modificar nenhum arquivo do projeto:
+
+````bash
+git commit --allow-empty -m "ci: forca execucao do pipeline"
+````
+Enviar para a branch principal
+
+````bash
+git push origin main
+````
+
+📊 Acompanhamento
+
+Após executar o comando git push, acesse a aba Actions do repositório no GitHub.
+
+Você verá uma nova execução do workflow com a mensagem:
+
+````bash
+ci: forca execucao do pipeline
+````
+
+Durante a execução, o pipeline realiza as validações configuradas, incluindo a instalação das dependências, análise de qualidade do código com Ruff e execução dos testes automatizados com Pytest.
+
+⚙️ Pipeline de Treinamento (Airflow DAG)
+
+O fluxo de treinamento e atualização do modelo de Machine Learning é orquestrado utilizando o Apache Airflow.
+
+A DAG principal do projeto foi desenvolvida para automatizar e monitorar as etapas do processo de treinamento do modelo preditivo.
+
+A execução do treinamento utiliza o seguinte script:
+
+````bash
+python scripts/train_model.py
+````
+🔄 Comportamento Esperado
+
+Ao acionar a DAG, o Airflow executará o processo de treinamento com base no dataset atual.
+
+Após a conclusão bem-sucedida da tarefa de treinamento (treinar_modelo), o modelo final:
+
+````bash
+models/medical_classifier.pkl
+````
+
+será gerado e ficará disponível para ser consumido pela FastAPI.
+
+O fluxo permite integrar o processo de treinamento do modelo à camada de orquestração do projeto, mantendo o processo organizado e automatizado.
