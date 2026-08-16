@@ -142,11 +142,11 @@ git clone https://github.com/Paulinhojr/tech-challenge-nlp.git
 
 #### 2. Acessar o diretório do projeto
 
-No terminal integrado do VS Code:
+Para garantir que os comandos serão executados no diretório correto e evitar erros de caminho:
 
-```bash
-cd tech-challenge-nlp
-```
+No explorador de arquivos do VS Code (lateral esquerda), clique com o botão direito diretamente sobre a pasta raiz do projeto (tech-challenge-nlp).
+
+Selecione a opção "Open in Integrated Terminal" (Abrir no Terminal Integrado).
 
 #### 3. Adicionar os arquivos ao staging
 
