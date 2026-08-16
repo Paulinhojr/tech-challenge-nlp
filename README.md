@@ -117,6 +117,9 @@ docker run -d -p 8000:8000 --name medical_api_container medical-classifier-api
 pip install requests
 python scripts/benchmark.py
 ```
+
+---
+
 ### 🚀 Integração Contínua (CI) — Medical Text Classification API
 
 Este repositório utiliza **GitHub Actions** para automatizar o pipeline de **Integração Contínua (CI)**. O objetivo do pipeline é garantir que as atualizações da nossa API de classificação de textos médicos e os modelos de Machine Learning sejam testados e validados automaticamente antes de integrarem a versão final.
