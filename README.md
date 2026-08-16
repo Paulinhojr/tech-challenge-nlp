@@ -119,81 +119,92 @@ python scripts/benchmark.py
 ```
 ### 🚀 Integração Contínua (CI) — Medical Text Classification API
 
-Este repositório utiliza **GitHub Actions** para automatizar o pipeline de **Integração Contínua (CI)**. O objetivo é garantir que as atualizações da API de classificação de textos médicos e dos modelos de Machine Learning sejam testadas e validadas automaticamente antes de integrarem a versão final.
+Este repositório utiliza **GitHub Actions** para automatizar o pipeline de **Integração Contínua (CI)**. O objetivo do pipeline é garantir que as atualizações da nossa API de classificação de textos médicos e os modelos de Machine Learning sejam testados e validados automaticamente antes de integrarem a versão final.
 
 Por padrão, o workflow é acionado automaticamente a cada alteração enviada (`push`) para a branch `main`.
+
+---
 
 ### 🛠️ Como Forçar a Execução do Pipeline Manualmente
 
 Caso seja necessário testar a esteira de CI/CD para validar as configurações, sem realizar alterações no código da aplicação, é possível utilizar um **commit vazio (`empty commit`)**.
 
-Siga os passos abaixo no terminal integrado do VS Code.
-
 #### 1. Clonar o repositório
 
-Caso o projeto ainda não esteja disponível localmente:
+Caso o projeto ainda não esteja disponível localmente, execute:
 
 ```bash
 git clone https://github.com/Paulinhojr/tech-challenge-nlp.git
-````
+```
 
-Acessar a pasta do projeto
+#### 2. Acessar o diretório do projeto
 
-````bash
+No terminal integrado do VS Code:
+
+```bash
 cd tech-challenge-nlp
-````
+```
 
-Adicionar os arquivos ao staging
+#### 3. Adicionar os arquivos ao staging
 
-````bash
+```bash
 git add .
-````
-Criar o commit de acionamento
+```
 
-O parâmetro --allow-empty permite criar um commit sem modificar nenhum arquivo do projeto:
+#### 4. Criar o commit de acionamento
 
-````bash
+O parâmetro `--allow-empty` permite criar um commit sem modificar nenhum arquivo do projeto. Esse commit será utilizado para disparar o workflow do GitHub Actions:
+
+```bash
 git commit --allow-empty -m "ci: forca execucao do pipeline"
-````
-Enviar para a branch principal
+```
 
-````bash
+#### 5. Enviar para a branch principal
+
+```bash
 git push origin main
-````
+```
 
-📊 Acompanhamento
+---
 
-Após executar o comando git push, acesse a aba Actions do repositório no GitHub.
+### 📊 Acompanhamento
 
-Você verá uma nova execução do workflow com a mensagem:
+Após executar o comando `git push`, acesse a aba **Actions** do repositório no GitHub.
 
-````bash
+Uma nova execução do workflow será iniciada com o commit:
+
+```text
 ci: forca execucao do pipeline
-````
+```
 
-Durante a execução, o pipeline realiza as validações configuradas, incluindo a instalação das dependências, análise de qualidade do código com Ruff e execução dos testes automatizados com Pytest.
+Durante a execução, o pipeline realizará as validações configuradas no projeto, incluindo a configuração do ambiente, instalação das dependências, análise estática do código e execução dos testes automatizados.
 
-⚙️ Pipeline de Treinamento (Airflow DAG)
+Uma execução concluída com sucesso será apresentada com o indicador verde de aprovação no GitHub Actions.
 
-O fluxo de treinamento e atualização do modelo de Machine Learning é orquestrado utilizando o Apache Airflow.
+---
 
-A DAG principal do projeto foi desenvolvida para automatizar e monitorar as etapas do processo de treinamento do modelo preditivo.
+### ⚙️ Pipeline de Treinamento (Airflow DAG)
 
-A execução do treinamento utiliza o seguinte script:
+O fluxo de treinamento e atualização do modelo de Machine Learning é orquestrado utilizando o **Apache Airflow**.
 
-````bash
+A DAG principal do projeto foi desenvolvida para automatizar e monitorar o processo de criação do modelo preditivo.
+
+A tarefa central do pipeline executa o script Python responsável pelo treinamento:
+
+```bash
 python scripts/train_model.py
-````
-🔄 Comportamento Esperado
+```
 
-Ao acionar a DAG, o Airflow executará o processo de treinamento com base no dataset atual.
+#### 🔄 Comportamento Esperado
 
-Após a conclusão bem-sucedida da tarefa de treinamento (treinar_modelo), o modelo final:
+Ao acionar a DAG, o Airflow executará o processo de treinamento utilizando o dataset disponível no projeto.
 
-````bash
+Após a conclusão bem-sucedida da tarefa `treinar_modelo`, o modelo final:
+
+```text
 models/medical_classifier.pkl
-````
+```
 
-será gerado e ficará disponível para ser consumido pela FastAPI.
+será gerado e ficará disponível para ser consumido pela **FastAPI**.
 
 O fluxo permite integrar o processo de treinamento do modelo à camada de orquestração do projeto, mantendo o processo organizado e automatizado.
