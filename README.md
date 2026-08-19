@@ -130,7 +130,7 @@ Por padrão, o workflow é acionado automaticamente a cada alteração enviada (
 
 ### 🛠️ Como Forçar a Execução do Pipeline Manualmente
 
-Caso seja necessário testar a esteira de CI/CD para validar as configurações, sem realizar alterações no código da aplicação, é possível utilizar um **commit vazio (`empty commit`)**.
+Caso seja necessário testar a esteira de Integração Contínua (CI) para validar as configurações, sem realizar alterações no código da aplicação, é possível utilizar um **commit vazio (`empty commit`)**.
 
 #### 1. Clonar o repositório
 
