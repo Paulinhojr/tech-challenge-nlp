@@ -148,6 +148,12 @@ No explorador de arquivos do VS Code (lateral esquerda), clique com o botão dir
 
 Selecione a opção "Open in Integrated Terminal" (Abrir no Terminal Integrado).
 
+Após realizar o clone, entre na pasta do repositório:
+
+```bash
+cd tech-challenge-nlp
+```
+
 #### 3. Adicionar os arquivos ao staging
 
 ```bash
