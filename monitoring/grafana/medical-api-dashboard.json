@@ -42,7 +42,7 @@
                     "hidden": false,
                     "query": {
                       "datasource": {
-                        "name": "afxjzxboiczcwd"
+                        "name": "prometheus"
                       },
                       "group": "prometheus",
                       "kind": "DataQuery",
@@ -164,7 +164,7 @@
                     "hidden": false,
                     "query": {
                       "datasource": {
-                        "name": "afxjzxboiczcwd"
+                        "name": "prometheus"
                       },
                       "group": "prometheus",
                       "kind": "DataQuery",
@@ -283,7 +283,7 @@
                     "hidden": false,
                     "query": {
                       "datasource": {
-                        "name": "afxjzxboiczcwd"
+                        "name": "prometheus"
                       },
                       "group": "prometheus",
                       "kind": "DataQuery",
@@ -369,7 +369,7 @@
                     "hidden": false,
                     "query": {
                       "datasource": {
-                        "name": "afxjzxboiczcwd"
+                        "name": "prometheus"
                       },
                       "group": "prometheus",
                       "kind": "DataQuery",
@@ -492,7 +492,7 @@
                     "hidden": false,
                     "query": {
                       "datasource": {
-                        "name": "afxjzxboiczcwd"
+                        "name": "prometheus"
                       },
                       "group": "prometheus",
                       "kind": "DataQuery",
