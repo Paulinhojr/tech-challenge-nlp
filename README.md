@@ -420,17 +420,31 @@ significa que o Prometheus reconhece o serviço, porém não está conseguindo a
 
 ---
 
-# 📊 Grafana — Dashboard de Monitoramento
+# 📈 Monitoramento e Observabilidade — Prometheus + Grafana
 
-O **Grafana** é utilizado para visualizar de forma gráfica as métricas coletadas pelo Prometheus.
+A API foi instrumentada com a biblioteca **prometheus-client** para disponibilizar métricas de funcionamento e desempenho.
 
-Neste projeto, o Grafana é iniciado automaticamente pelo Docker Compose e o **Prometheus já é configurado como Data Source automaticamente** através do mecanismo de provisioning.
+A arquitetura utilizada é:
 
-Portanto, não é necessário cadastrar manualmente o Prometheus dentro do Grafana.
+```text
+FastAPI
+   │
+   │ /metrics
+   ▼
+Prometheus
+   │
+   │ Data Source
+   ▼
+Grafana
+```
+
+O **Prometheus** coleta as métricas expostas pela FastAPI e o **Grafana** utiliza essas informações para apresentar os dados em um dashboard.
 
 ---
 
-## 🚀 1. Iniciar o ambiente
+## 🐳 Executando a Stack de Monitoramento
+
+É necessário possuir **Docker** e **Docker Compose** instalados e em execução.
 
 Na raiz do projeto, execute:
 
@@ -438,21 +452,107 @@ Na raiz do projeto, execute:
 docker compose up --build
 ```
 
-Esse comando inicia os três serviços utilizados no monitoramento:
+O Docker Compose iniciará automaticamente:
 
-```text
-FastAPI      → http://localhost:8000
-Prometheus   → http://localhost:9090
-Grafana      → http://localhost:3000
+- **FastAPI**
+- **Prometheus**
+- **Grafana**
+
+Os serviços estarão disponíveis em:
+
+| Serviço | Endereço |
+| :--- | :--- |
+| FastAPI | http://localhost:8000 |
+| Swagger | http://localhost:8000/docs |
+| Health Check | http://localhost:8000/health |
+| Métricas | http://localhost:8000/metrics |
+| Prometheus | http://localhost:9090 |
+| Grafana | http://localhost:3000 |
+
+Para encerrar a stack:
+
+```bash
+docker compose down
 ```
-
-Aguarde alguns segundos até que todos os containers estejam inicializados.
 
 ---
 
-## 🔐 2. Acessar o Grafana
+## 🩺 1. Verificando a API
 
-Abra no navegador:
+### Health Check
+
+Acesse:
+
+```text
+http://localhost:8000/health
+```
+
+Resultado esperado:
+
+```json
+{
+  "status": "ok"
+}
+```
+
+### Endpoint de Métricas
+
+Acesse:
+
+```text
+http://localhost:8000/metrics
+```
+
+Entre as métricas disponibilizadas estão:
+
+```text
+api_requests_total
+api_request_duration_seconds
+process_resident_memory_bytes
+process_cpu_seconds_total
+```
+
+A métrica `api_requests_total` registra a quantidade de requisições recebidas pela API, incluindo método HTTP, endpoint e status da resposta.
+
+A métrica `api_request_duration_seconds` registra o tempo utilizado para processar as requisições.
+
+---
+
+## 🔎 2. Verificando o Prometheus
+
+O Prometheus está configurado através do arquivo:
+
+```text
+monitoring/prometheus.yml
+```
+
+O intervalo de coleta configurado é de aproximadamente **5 segundos**.
+
+Acesse:
+
+```text
+http://localhost:9090
+```
+
+No campo de consulta, execute:
+
+```promql
+up
+```
+
+O resultado esperado é semelhante a:
+
+```text
+up{instance="api:8000", job="medical-api"} 1
+```
+
+O valor `1` indica que o Prometheus está conseguindo acessar a FastAPI e coletar suas métricas corretamente.
+
+---
+
+## 📊 3. Acessando o Grafana
+
+Acesse:
 
 ```text
 http://localhost:3000
@@ -467,31 +567,31 @@ Senha: admin
 
 O Grafana poderá solicitar a criação de uma nova senha.
 
-Caso apareça a opção de pular essa etapa, ela também pode ser utilizada.
-
 ---
 
-## 🔌 3. Prometheus configurado automaticamente
+### 🔌 Data Source do Prometheus
 
-O projeto já contém o arquivo responsável por cadastrar automaticamente o Prometheus no Grafana:
+Não é necessário configurar o Prometheus manualmente.
+
+O projeto utiliza o mecanismo de **Provisioning do Grafana**, através do arquivo:
 
 ```text
 monitoring/grafana/provisioning/datasources/prometheus.yml
 ```
 
-O Data Source criado automaticamente possui o nome:
+Esse arquivo cadastra automaticamente o Data Source:
 
 ```text
 prometheus
 ```
 
-e utiliza internamente o endereço:
+utilizando o endereço interno:
 
 ```text
 http://prometheus:9090
 ```
 
-Caso queira confirmar a configuração dentro do Grafana, acesse:
+Caso queira verificar a configuração no Grafana:
 
 ```text
 Connections
@@ -499,15 +599,11 @@ Connections
 → prometheus
 ```
 
-O Prometheus deverá aparecer automaticamente.
-
-Não é necessário criar um novo Data Source manualmente.
-
 ---
 
-# 📥 4. Importar o Dashboard
+## 📥 4. Importando o Dashboard
 
-O dashboard utilizado no projeto está salvo e versionado no arquivo:
+O dashboard está disponível em:
 
 ```text
 monitoring/grafana/medical-api-dashboard.json
@@ -515,50 +611,41 @@ monitoring/grafana/medical-api-dashboard.json
 
 Para importar:
 
-1. No menu lateral do Grafana, clique em **Dashboards**.
+1. Acesse **Dashboards**.
 2. Clique em **New**.
 3. Selecione **Import**.
 4. Clique em **Upload dashboard JSON file**.
-5. Navegue até:
+5. Selecione:
 
 ```text
 monitoring/grafana/medical-api-dashboard.json
 ```
 
-6. Selecione o arquivo.
-7. O Grafana deverá identificar automaticamente o dashboard:
+6. Clique em **Import**.
+
+O dashboard:
 
 ```text
 Medical API - Monitoring
 ```
 
-8. Clique em:
-
-```text
-Import
-```
-
-Após a importação, os painéis aparecerão automaticamente no dashboard.
+será criado com os painéis já configurados.
 
 ---
 
-# 📈 5. Painéis do Dashboard
+## 📈 5. Métricas do Dashboard
 
-O dashboard possui cinco painéis principais.
+O dashboard possui cinco painéis.
 
 ### Taxa de Requisições da API
-
-Mostra a taxa de requisições recebidas pela aplicação ao longo do tempo.
 
 ```promql
 rate(api_requests_total[$__rate_interval])
 ```
 
----
+Apresenta a taxa de requisições recebidas pela aplicação.
 
 ### Latência Média da API
-
-Mostra o tempo médio necessário para a API processar as requisições.
 
 ```promql
 rate(api_request_duration_seconds_sum[1m])
@@ -566,82 +653,53 @@ rate(api_request_duration_seconds_sum[1m])
 rate(api_request_duration_seconds_count[1m])
 ```
 
----
+Apresenta o tempo médio utilizado pela API para processar as requisições.
 
 ### Uso de CPU da API
-
-Mostra aproximadamente o consumo de CPU do processo responsável pela API.
 
 ```promql
 rate(process_cpu_seconds_total{job="medical-api"}[1m]) * 100
 ```
 
-A unidade utilizada no Grafana é:
-
-```text
-Percent (0-100)
-```
-
----
+Apresenta o consumo de CPU do processo da aplicação.
 
 ### Uso de Memória da API
-
-Mostra a quantidade de memória RAM residente utilizada pelo processo Python da aplicação.
 
 ```promql
 process_resident_memory_bytes{job="medical-api"}
 ```
 
-A unidade configurada é:
-
-```text
-Data / bytes (IEC)
-```
-
-permitindo ao Grafana converter automaticamente os valores para KiB, MiB ou GiB.
-
----
+Apresenta a quantidade de memória RAM utilizada pelo processo da API.
 
 ### Erros da API — Últimos 5 Minutos
-
-Esse painel mostra a quantidade de respostas HTTP com status:
-
-```text
-4xx
-5xx
-```
-
-registradas nos últimos cinco minutos.
-
-A consulta utilizada é:
 
 ```promql
 sum(increase(api_requests_total{status_code=~"4..|5.."}[5m]))
 ```
 
-Em uma execução nova do projeto, esse painel pode aparecer inicialmente como:
+Apresenta a quantidade de respostas HTTP `4xx` e `5xx` registradas nos últimos cinco minutos.
+
+Em uma execução nova, esse painel pode inicialmente apresentar:
 
 ```text
 No data
 ```
 
-Isso é normal.
-
-Significa apenas que ainda não ocorreu nenhuma requisição com erro.
+Isso é esperado caso nenhum erro tenha ocorrido.
 
 ---
 
-# 🧪 6. Testar o Painel de Erros
+## 🧪 6. Testando o Monitoramento de Erros
 
-Para verificar se o monitoramento de erros está funcionando, podemos gerar propositalmente uma requisição HTTP `404`.
+Para testar o painel de erros, gere propositalmente uma requisição `404`.
 
-Abra no navegador:
+Acesse:
 
 ```text
 http://localhost:8000/teste
 ```
 
-Como a rota `/teste` não existe na aplicação, a FastAPI deverá retornar:
+Como a rota `/teste` não existe, a FastAPI deverá retornar:
 
 ```json
 {
@@ -649,25 +707,17 @@ Como a rota `/teste` não existe na aplicação, a FastAPI deverá retornar:
 }
 ```
 
-com o código HTTP:
+com status:
 
 ```text
 404 Not Found
 ```
 
-Acesse essa URL algumas vezes ou pressione `F5` algumas vezes para gerar múltiplos erros.
+Atualize a página algumas vezes para gerar múltiplas requisições com erro.
 
-Exemplo:
+Depois aguarde aproximadamente **10 a 15 segundos** para que o Prometheus realize a coleta.
 
-```text
-http://localhost:8000/teste
-http://localhost:8000/teste
-http://localhost:8000/teste
-```
-
-Depois aguarde aproximadamente **10 a 15 segundos**, pois o Prometheus realiza a coleta das métricas periodicamente.
-
-Volte ao dashboard do Grafana e clique em:
+Volte ao Grafana e clique em:
 
 ```text
 Refresh
@@ -679,27 +729,15 @@ O painel:
 Erros da API - Últimos 5 Minutos
 ```
 
-deverá começar a apresentar a quantidade de erros registrados.
+deverá apresentar os erros registrados.
 
----
-
-# 🔎 7. Confirmar os erros diretamente no Prometheus
-
-Também é possível verificar diretamente no Prometheus se os erros `404` foram registrados.
-
-Acesse:
-
-```text
-http://localhost:9090
-```
-
-Execute a consulta:
+Também é possível confirmar diretamente no Prometheus com:
 
 ```promql
 api_requests_total{status_code="404"}
 ```
 
-O Prometheus deverá apresentar algo semelhante a:
+Exemplo de resultado:
 
 ```text
 api_requests_total{
@@ -709,78 +747,55 @@ api_requests_total{
 } 5
 ```
 
-O número final representa a quantidade de requisições `404` registradas para aquela rota.
-
 ---
 
-# ✅ 8. Validação final do Dashboard
+## ✅ 7. Validação Final
 
-Após iniciar a aplicação e importar o dashboard, o comportamento esperado é:
-
-```text
-Taxa de Requisições da API       → apresenta dados
-Latência Média da API            → apresenta dados
-Uso de CPU da API                → apresenta dados
-Uso de Memória da API            → apresenta dados
-Erros da API - Últimos 5 Minutos → apresenta dados após gerar erros 404
-```
-
-Caso algum gráfico ainda esteja vazio, aguarde alguns segundos e clique em:
+Ao final, o comportamento esperado é:
 
 ```text
-Refresh
+FastAPI /health                      → funcionando
+FastAPI /metrics                     → funcionando
+Prometheus up                        → valor 1
+Taxa de Requisições                  → apresenta dados
+Latência Média                       → apresenta dados
+Uso de CPU                           → apresenta dados
+Uso de Memória                       → apresenta dados
+Erros da API                         → apresenta dados após gerar erros 404
 ```
 
-no canto superior direito do dashboard.
-
----
-
-# 🔄 Fluxo completo do monitoramento
-
-```text
-Usuário
-   │
-   ▼
-FastAPI
-   │
-   ├── /health
-   ├── /predict
-   └── /metrics
-          │
-          ▼
-      Prometheus
-          │
-          ▼
-        Grafana
-          │
-          ▼
-Medical API - Monitoring
-```
-
-Com isso, o processo de reprodução do monitoramento é:
+### Resumo para reprodução
 
 ```text
 1. docker compose up --build
 
-2. Abrir:
+2. Testar:
+   http://localhost:8000/health
+   http://localhost:8000/metrics
+
+3. Acessar:
+   http://localhost:9090
+
+   Executar:
+   up
+
+4. Acessar:
    http://localhost:3000
 
-3. Login:
+5. Login:
    admin / admin
 
-4. Dashboards
+6. Dashboards
    → New
    → Import
 
-5. Selecionar:
+7. Selecionar:
    monitoring/grafana/medical-api-dashboard.json
 
-6. Importar o dashboard
-
-7. Para testar erros:
+8. Para testar erros:
    http://localhost:8000/teste
 
-8. Aguardar alguns segundos e clicar em Refresh
+9. Aguardar alguns segundos e atualizar o Grafana.
 ```
 
-O Prometheus já é configurado automaticamente pelo projeto, portanto não é necessário realizar nenhuma configuração manual adicional de Data Source no Grafana.
+O Data Source do Prometheus é configurado automaticamente pelo projeto, portanto nenhuma configuração manual adicional é necessária.
