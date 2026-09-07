@@ -420,58 +420,6 @@ significa que o Prometheus reconhece o serviço, porém não está conseguindo a
 
 ---
 
-# 📊 Grafana
-
-O Grafana é utilizado para visualizar graficamente as métricas coletadas pelo Prometheus.
-
-Acesse:
-
-```text
-http://localhost:3000
-```
-
-No primeiro acesso, utilize as credenciais padrão:
-
-```text
-Usuário: admin
-Senha: admin
-```
-
-O Grafana poderá solicitar a alteração da senha no primeiro login.
-
----
-
-## 🔌 Configurando o Prometheus como Data Source
-
-Dentro do Grafana:
-
-1. Acesse **Connections**.
-2. Entre em **Data Sources**.
-3. Selecione **Prometheus**.
-4. Configure o endereço:
-
-```text
-http://prometheus:9090
-```
-
-5. Clique em:
-
-```text
-Save & Test
-```
-
-O resultado esperado é uma mensagem semelhante a:
-
-```text
-Successfully queried the Prometheus API.
-```
-
-> Importante: dentro do Docker Compose deve ser utilizado `prometheus:9090` e não `localhost:9090`, pois Grafana e Prometheus estão sendo executados em containers diferentes.
-
----
-
----
-
 # 📊 Grafana — Dashboard de Monitoramento
 
 O **Grafana** é utilizado para visualizar de forma gráfica as métricas coletadas pelo Prometheus.
