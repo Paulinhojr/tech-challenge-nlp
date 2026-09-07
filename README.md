@@ -1,23 +1,26 @@
----
-
 ### 🚀 Recomendação de Infraestrutura em Nuvem (AWS / GCP / Azure)
 
-Para este projeto, a provedora recomendada é a **AWS** (ou equivalentemente **GCP/Azure**), utilizando serviços gerenciados e serverless para otimizar custos e manutenção:
+Para este projeto, a provedora recomendada é a **AWS** (ou equivalentemente **GCP/Azure**), utilizando serviços gerenciados e serverless para otimizar custos e manutenção.
 
-#### Opção A: Serverless com AWS Lambda + Amazon ECR (Recomendado para início/baixo custo)
+#### Opção A: Serverless com AWS Lambda + Amazon ECR
 
-* **Arquitetura:** Empacotar a imagem Docker da API no **Amazon ECR** e executá-la através do **AWS Lambda** integrado ao **Amazon API Gateway**.
+Recomendado para início do projeto ou cenários de baixo volume de requisições.
+
+* **Arquitetura:** Empacotar a imagem Docker da API no **Amazon ECR** e executá-la através do **AWS Lambda**, integrado ao **Amazon API Gateway**.
 * **Vantagens:**
-  * Custo zero enquanto não houver requisições (cobrança por milissegundos de execução).
-  * Auto-scaling automático conforme a demanda de requisições aumenta.
-  * O footprint do modelo (`TF-IDF + Logistic Regression`) é extremamente leve e roda perfeitamente em limites serverless.
+  * Cobrança baseada no tempo de execução.
+  * Escalabilidade automática de acordo com a demanda.
+  * O modelo `TF-IDF + Logistic Regression` possui baixo consumo computacional e é adequado para ambientes serverless.
 
-#### Opção B: Containers Gerenciados com AWS App Runner / Amazon ECS (Recomendado para tráfego constante)
+#### Opção B: Containers Gerenciados com AWS App Runner / Amazon ECS
 
-* **Arquitetura:** Subir a imagem Docker diretamente no **AWS App Runner** ou **Amazon ECS (Fargate)**.
+Recomendado para cenários com tráfego constante.
+
+* **Arquitetura:** Executar a imagem Docker diretamente através do **AWS App Runner** ou **Amazon ECS (Fargate)**.
 * **Vantagens:**
-  * Mantém o container sempre quente (*warm start*), eliminando latências iniciais (*cold start*).
-  * Ideal para ambientes hospitalares ou clínicas onde o fluxo de consultas de textos médicos ocorre durante todo o dia útil.
+  * Mantém o container disponível continuamente.
+  * Reduz problemas relacionados a *cold start*.
+  * Adequado para ambientes hospitalares ou clínicas com fluxo contínuo de consultas.
 
 ---
 
@@ -52,36 +55,40 @@ Para este projeto, a provedora recomendada é a **AWS** (ou equivalentemente **G
 ```text
 tech-challenge-nlp/
 ├── .github/
-│   └── workflows/                 # Pipeline de CI com GitHub Actions
+│   └── workflows/                     # Pipeline de CI com GitHub Actions
 │
 ├── app/
 │   ├── __init__.py
-│   ├── main.py                    # FastAPI (/health, /predict e /metrics)
+│   ├── main.py                        # FastAPI (/health, /predict e /metrics)
 │   └── model.py
 │
-├── dags/                          # DAGs do Apache Airflow
+├── dags/                              # DAGs do Apache Airflow
 │
-├── data/                          # Dataset de treino e teste
+├── data/                              # Dataset de treino e teste
 │
 ├── models/
-│   └── medical_classifier.pkl     # Modelo treinado
+│   └── medical_classifier.pkl         # Modelo treinado
 │
 ├── monitoring/
 │   ├── grafana/
-│   │   └── medical-api-dashboard.json
-│   └── prometheus.yml
+│   │   ├── medical-api-dashboard.json # Dashboard exportado do Grafana
+│   │   └── provisioning/
+│   │       └── datasources/
+│   │           └── prometheus.yml     # Data Source automático do Grafana
+│   │
+│   └── prometheus.yml                 # Configuração do Prometheus
 │
 ├── scripts/
-│   ├── benchmark.py               # Medição de latência
+│   ├── benchmark.py                   # Medição de latência
 │   ├── inspect_dataset.py
-│   └── train_model.py             # Treinamento do modelo baseline
+│   └── train_model.py                 # Treinamento do modelo baseline
 │
-├── tests/                         # Testes automatizados
+├── tests/                             # Testes automatizados
 │
 ├── .dockerignore
 ├── .gitignore
 ├── Dockerfile
-├── docker-compose.yml             # API + Prometheus + Grafana
+├── docker-compose.yml                 # API + Prometheus + Grafana
 ├── README.md
 └── requirements.txt
 ```
@@ -97,7 +104,7 @@ tech-challenge-nlp/
 
 ---
 
-## ⚡ Benchmark de Latência (no Docker)
+## ⚡ Benchmark de Latência
 
 | Métrica | Tempo (ms) |
 | :--- | :--- |
@@ -107,21 +114,23 @@ tech-challenge-nlp/
 
 ---
 
-## 🛠️ Como Executar a Aplicação
+# 🛠️ Executando somente a API
 
-### 1. Construir a Imagem Docker
+Caso seja necessário executar apenas a aplicação FastAPI sem a stack de monitoramento:
+
+### 1. Construir a imagem Docker
 
 ```bash
 docker build -t medical-classifier-api .
 ```
 
-### 2. Subir o Container
+### 2. Subir o container
 
 ```bash
 docker run -d -p 8000:8000 --name medical_api_container medical-classifier-api
 ```
 
-### 3. Acessar a Documentação
+### 3. Acessar a documentação
 
 Acesse:
 
@@ -129,7 +138,15 @@ Acesse:
 http://127.0.0.1:8000/docs
 ```
 
-**Exemplo de Payload (`POST /predict`):**
+### Exemplo de Payload
+
+Endpoint:
+
+```text
+POST /predict
+```
+
+Payload:
 
 ```json
 {
@@ -137,7 +154,7 @@ http://127.0.0.1:8000/docs
 }
 ```
 
-### 4. Rodar o Benchmark de Latência
+### 4. Rodar o benchmark de latência
 
 ```bash
 pip install requests
@@ -146,47 +163,43 @@ python scripts/benchmark.py
 
 ---
 
-### 🚀 Integração Contínua (CI) — Medical Text Classification API
+# 🚀 Integração Contínua (CI)
 
 Este repositório utiliza **GitHub Actions** para automatizar o pipeline de **Integração Contínua (CI)**.
 
-O objetivo do pipeline é garantir que as atualizações da API de classificação de textos médicos e os modelos de Machine Learning sejam testados e validados automaticamente antes de integrarem a versão final.
+O objetivo do pipeline é garantir que atualizações da API e do projeto de Machine Learning sejam testadas e validadas automaticamente antes de integrarem a versão final.
 
-Por padrão, o workflow é acionado automaticamente a cada alteração enviada (`push`) para a branch `main`.
+Por padrão, o workflow é acionado automaticamente a cada alteração enviada (`push`) para a branch:
+
+```text
+main
+```
 
 ---
 
-### 🛠️ Como Forçar a Execução do Pipeline Manualmente
+## 🛠️ Forçando a Execução do Pipeline Manualmente
 
-Caso seja necessário testar a esteira de Integração Contínua (CI) para validar as configurações, sem realizar alterações no código da aplicação, é possível utilizar um **commit vazio (`empty commit`)**.
+Caso seja necessário executar novamente a esteira de CI sem realizar alterações no código, é possível criar um **commit vazio**.
 
-#### 1. Clonar o repositório
+### 1. Clonar o repositório
 
 ```bash
 git clone https://github.com/Paulinhojr/tech-challenge-nlp.git
 ```
 
-#### 2. Acessar o diretório do projeto
+### 2. Acessar o diretório
 
 ```bash
 cd tech-challenge-nlp
 ```
 
-#### 3. Adicionar os arquivos ao staging
-
-```bash
-git add .
-```
-
-#### 4. Criar o commit de acionamento
-
-O parâmetro `--allow-empty` permite criar um commit sem modificar nenhum arquivo do projeto.
+### 3. Criar um commit vazio
 
 ```bash
 git commit --allow-empty -m "ci: forca execucao do pipeline"
 ```
 
-#### 5. Enviar para a branch principal
+### 4. Enviar para a branch principal
 
 ```bash
 git push origin main
@@ -194,235 +207,69 @@ git push origin main
 
 ---
 
-### 📊 Acompanhamento
+## 📊 Acompanhamento do CI
 
-Após executar o comando `git push`, acesse a aba **Actions** do repositório no GitHub.
-
-Uma nova execução do workflow será iniciada com o commit:
+Após executar o `git push`, acesse a aba:
 
 ```text
-ci: forca execucao do pipeline
+Actions
 ```
 
-Durante a execução, o pipeline realizará as validações configuradas no projeto, incluindo a configuração do ambiente, instalação das dependências, análise estática do código e execução dos testes automatizados.
+do repositório no GitHub.
+
+Uma nova execução do workflow será iniciada.
+
+Durante a execução, o pipeline realizará as validações configuradas no projeto, incluindo:
+
+* configuração do ambiente;
+* instalação das dependências;
+* análise estática do código;
+* execução dos testes automatizados.
 
 Uma execução concluída com sucesso será apresentada com o indicador verde de aprovação no GitHub Actions.
 
 ---
 
-### ⚙️ Pipeline de Treinamento (Airflow DAG)
+# ⚙️ Pipeline de Treinamento — Apache Airflow
 
 O fluxo de treinamento e atualização do modelo de Machine Learning é orquestrado utilizando o **Apache Airflow**.
 
-A DAG principal do projeto foi desenvolvida para automatizar e monitorar o processo de criação do modelo preditivo.
+A DAG principal do projeto automatiza e monitora o processo de criação do modelo preditivo.
 
-A tarefa central do pipeline executa o script Python responsável pelo treinamento:
+A tarefa central executa:
 
 ```bash
 python scripts/train_model.py
 ```
 
-#### 🔄 Comportamento Esperado
+## 🔄 Comportamento Esperado
 
 Ao acionar a DAG, o Airflow executará o processo de treinamento utilizando o dataset disponível no projeto.
 
-Após a conclusão bem-sucedida da tarefa `treinar_modelo`, o modelo final:
+Após a conclusão da tarefa:
+
+```text
+treinar_modelo
+```
+
+o modelo final será salvo em:
 
 ```text
 models/medical_classifier.pkl
 ```
 
-será gerado e ficará disponível para ser consumido pela **FastAPI**.
-
-O fluxo permite integrar o processo de treinamento do modelo à camada de orquestração do projeto, mantendo o processo organizado e automatizado.
+Esse modelo ficará disponível para ser consumido pela **FastAPI**.
 
 ---
 
-# 📈 Monitoramento e Observabilidade — Prometheus + Grafana
+# 📈 Monitoramento e Observabilidade
 
-A API foi instrumentada utilizando a biblioteca **prometheus-client**, permitindo coletar métricas relacionadas ao funcionamento e ao desempenho da aplicação.
+A solução utiliza:
 
-As métricas são disponibilizadas através do endpoint:
-
-```text
-http://localhost:8000/metrics
-```
-
-O **Prometheus** coleta periodicamente essas informações e o **Grafana** utiliza o Prometheus como fonte de dados para disponibilizar as métricas através de dashboards.
-
-A arquitetura de observabilidade utilizada no projeto é:
-
-```text
-                 ┌──────────────────┐
-                 │     FastAPI      │
-                 │                  │
-                 │     /metrics     │
-                 └────────┬─────────┘
-                          │
-                          │ coleta de métricas
-                          ▼
-                 ┌──────────────────┐
-                 │    Prometheus    │
-                 │    Porta 9090    │
-                 └────────┬─────────┘
-                          │
-                          │ Data Source
-                          ▼
-                 ┌──────────────────┐
-                 │     Grafana      │
-                 │    Porta 3000    │
-                 └──────────────────┘
-```
-
----
-
-## 🐳 Executando a Stack Completa de Monitoramento
-
-Para executar a stack é necessário possuir **Docker** e **Docker Compose** instalados e em execução.
-
-Na raiz do projeto execute:
-
-```bash
-docker compose up --build
-```
-
-O Docker Compose irá iniciar automaticamente os três serviços:
-
-* **FastAPI**
-* **Prometheus**
-* **Grafana**
-
-Após a inicialização, os serviços estarão disponíveis nos seguintes endereços:
-
-| Serviço | Endereço |
-| :--- | :--- |
-| FastAPI | http://localhost:8000 |
-| Swagger | http://localhost:8000/docs |
-| Health Check | http://localhost:8000/health |
-| Métricas da API | http://localhost:8000/metrics |
-| Prometheus | http://localhost:9090 |
-| Grafana | http://localhost:3000 |
-
-Para finalizar toda a stack:
-
-```bash
-docker compose down
-```
-
----
-
-## 🩺 Health Check
-
-Para verificar se a API está funcionando corretamente, acesse:
-
-```text
-http://localhost:8000/health
-```
-
-O resultado esperado é:
-
-```json
-{
-  "status": "ok"
-}
-```
-
----
-
-## 📡 Endpoint de Métricas
-
-As métricas da aplicação podem ser visualizadas diretamente através de:
-
-```text
-http://localhost:8000/metrics
-```
-
-Entre as métricas disponibilizadas estão:
-
-```text
-api_requests_total
-api_request_duration_seconds
-process_resident_memory_bytes
-process_cpu_seconds_total
-```
-
-A métrica:
-
-```text
-api_requests_total
-```
-
-registra a quantidade de requisições recebidas pela API, incluindo:
-
-* método HTTP;
-* endpoint;
-* status HTTP.
-
-A métrica:
-
-```text
-api_request_duration_seconds
-```
-
-registra o tempo gasto para processar as requisições.
-
----
-
-# 🔎 Prometheus
-
-O Prometheus está configurado para coletar automaticamente as métricas da FastAPI.
-
-O arquivo responsável pela configuração está disponível em:
-
-```text
-monitoring/prometheus.yml
-```
-
-O intervalo de coleta configurado é de aproximadamente **5 segundos**.
-
----
-
-## ✅ Verificando a Comunicação Prometheus → API
-
-Acesse:
-
-```text
-http://localhost:9090
-```
-
-No campo de consulta do Prometheus execute:
-
-```promql
-up
-```
-
-O resultado esperado é semelhante a:
-
-```text
-up{instance="api:8000", job="medical-api"} 1
-```
-
-O valor:
-
-```text
-1
-```
-
-indica que o Prometheus consegue acessar a FastAPI e coletar as métricas corretamente.
-
-Caso o valor seja:
-
-```text
-0
-```
-
-significa que o Prometheus reconhece o serviço, porém não está conseguindo acessá-lo.
-
----
-
-# 📈 Monitoramento e Observabilidade — Prometheus + Grafana
-
-A API foi instrumentada com a biblioteca **prometheus-client** para disponibilizar métricas de funcionamento e desempenho.
+* **FastAPI** para disponibilizar a aplicação;
+* **prometheus-client** para instrumentação;
+* **Prometheus** para coleta e armazenamento das métricas;
+* **Grafana** para visualização.
 
 A arquitetura utilizada é:
 
@@ -438,27 +285,27 @@ Prometheus
 Grafana
 ```
 
-O **Prometheus** coleta as métricas expostas pela FastAPI e o **Grafana** utiliza essas informações para apresentar os dados em um dashboard.
-
 ---
 
-## 🐳 Executando a Stack de Monitoramento
+# 🐳 Executando a Stack Completa
 
-É necessário possuir **Docker** e **Docker Compose** instalados e em execução.
+Para executar API, Prometheus e Grafana em conjunto, é necessário possuir **Docker** e **Docker Compose** instalados.
 
-Na raiz do projeto, execute:
+Na raiz do projeto execute:
 
 ```bash
 docker compose up --build
 ```
 
-O Docker Compose iniciará automaticamente:
+O Docker Compose iniciará automaticamente os três serviços:
 
-- **FastAPI**
-- **Prometheus**
-- **Grafana**
+```text
+FastAPI
+Prometheus
+Grafana
+```
 
-Os serviços estarão disponíveis em:
+Após a inicialização:
 
 | Serviço | Endereço |
 | :--- | :--- |
@@ -469,7 +316,7 @@ Os serviços estarão disponíveis em:
 | Prometheus | http://localhost:9090 |
 | Grafana | http://localhost:3000 |
 
-Para encerrar a stack:
+Para finalizar a stack:
 
 ```bash
 docker compose down
@@ -477,9 +324,9 @@ docker compose down
 
 ---
 
-## 🩺 1. Verificando a API
+# 🩺 1. Verificando a FastAPI
 
-### Health Check
+## Health Check
 
 Acesse:
 
@@ -495,7 +342,9 @@ Resultado esperado:
 }
 ```
 
-### Endpoint de Métricas
+---
+
+## Endpoint de Métricas
 
 Acesse:
 
@@ -512,13 +361,26 @@ process_resident_memory_bytes
 process_cpu_seconds_total
 ```
 
-A métrica `api_requests_total` registra a quantidade de requisições recebidas pela API, incluindo método HTTP, endpoint e status da resposta.
+### `api_requests_total`
 
-A métrica `api_request_duration_seconds` registra o tempo utilizado para processar as requisições.
+Registra a quantidade de requisições recebidas pela API, incluindo:
+
+* método HTTP;
+* endpoint;
+* status HTTP.
+
+### `api_request_duration_seconds`
+
+Registra o tempo gasto pela aplicação para processar as requisições.
+
+As métricas de processo também permitem acompanhar informações como:
+
+* consumo de memória;
+* utilização de CPU.
 
 ---
 
-## 🔎 2. Verificando o Prometheus
+# 🔎 2. Verificando o Prometheus
 
 O Prometheus está configurado através do arquivo:
 
@@ -526,7 +388,11 @@ O Prometheus está configurado através do arquivo:
 monitoring/prometheus.yml
 ```
 
-O intervalo de coleta configurado é de aproximadamente **5 segundos**.
+O intervalo de coleta utilizado é de aproximadamente:
+
+```text
+5 segundos
+```
 
 Acesse:
 
@@ -534,23 +400,37 @@ Acesse:
 http://localhost:9090
 ```
 
-No campo de consulta, execute:
+No campo de consulta do Prometheus execute:
 
 ```promql
 up
 ```
 
-O resultado esperado é semelhante a:
+O resultado esperado é:
 
 ```text
 up{instance="api:8000", job="medical-api"} 1
 ```
 
-O valor `1` indica que o Prometheus está conseguindo acessar a FastAPI e coletar suas métricas corretamente.
+O valor:
+
+```text
+1
+```
+
+indica que o Prometheus está conseguindo acessar a FastAPI e coletar as métricas corretamente.
+
+Caso seja exibido:
+
+```text
+0
+```
+
+o Prometheus reconhece o serviço, porém não está conseguindo acessar a API.
 
 ---
 
-## 📊 3. Acessando o Grafana
+# 📊 3. Grafana
 
 Acesse:
 
@@ -558,7 +438,7 @@ Acesse:
 http://localhost:3000
 ```
 
-No primeiro acesso, utilize:
+No primeiro acesso utilize:
 
 ```text
 Usuário: admin
@@ -569,29 +449,29 @@ O Grafana poderá solicitar a criação de uma nova senha.
 
 ---
 
-### 🔌 Data Source do Prometheus
+## 🔌 Data Source do Prometheus
 
-Não é necessário configurar o Prometheus manualmente.
+O Prometheus **não precisa ser configurado manualmente no Grafana**.
 
-O projeto utiliza o mecanismo de **Provisioning do Grafana**, através do arquivo:
+O projeto utiliza o mecanismo de **Provisioning do Grafana** através do arquivo:
 
 ```text
 monitoring/grafana/provisioning/datasources/prometheus.yml
 ```
 
-Esse arquivo cadastra automaticamente o Data Source:
+Esse arquivo cria automaticamente o Data Source:
 
 ```text
 prometheus
 ```
 
-utilizando o endereço interno:
+utilizando internamente:
 
 ```text
 http://prometheus:9090
 ```
 
-Caso queira verificar a configuração no Grafana:
+Caso seja necessário verificar a configuração:
 
 ```text
 Connections
@@ -601,9 +481,9 @@ Connections
 
 ---
 
-## 📥 4. Importando o Dashboard
+# 📥 4. Importando o Dashboard
 
-O dashboard está disponível em:
+O dashboard utilizado pelo projeto está salvo em:
 
 ```text
 monitoring/grafana/medical-api-dashboard.json
@@ -611,7 +491,7 @@ monitoring/grafana/medical-api-dashboard.json
 
 Para importar:
 
-1. Acesse **Dashboards**.
+1. Acesse **Dashboards** no Grafana.
 2. Clique em **New**.
 3. Selecione **Import**.
 4. Clique em **Upload dashboard JSON file**.
@@ -623,29 +503,33 @@ monitoring/grafana/medical-api-dashboard.json
 
 6. Clique em **Import**.
 
-O dashboard:
+O dashboard será criado com o nome:
 
 ```text
 Medical API - Monitoring
 ```
 
-será criado com os painéis já configurados.
+Os painéis já estarão configurados para utilizar o Prometheus provisionado pelo projeto.
 
 ---
 
-## 📈 5. Métricas do Dashboard
+# 📈 5. Painéis do Dashboard
 
-O dashboard possui cinco painéis.
+O dashboard possui cinco painéis principais.
 
-### Taxa de Requisições da API
+## Taxa de Requisições da API
+
+Mostra a taxa de requisições recebidas pela aplicação.
 
 ```promql
 rate(api_requests_total[$__rate_interval])
 ```
 
-Apresenta a taxa de requisições recebidas pela aplicação.
+---
 
-### Latência Média da API
+## Latência Média da API
+
+Mostra o tempo médio utilizado para processar as requisições.
 
 ```promql
 rate(api_request_duration_seconds_sum[1m])
@@ -653,45 +537,56 @@ rate(api_request_duration_seconds_sum[1m])
 rate(api_request_duration_seconds_count[1m])
 ```
 
-Apresenta o tempo médio utilizado pela API para processar as requisições.
+---
 
-### Uso de CPU da API
+## Uso de CPU da API
+
+Mostra o consumo de CPU do processo da aplicação.
 
 ```promql
 rate(process_cpu_seconds_total{job="medical-api"}[1m]) * 100
 ```
 
-Apresenta o consumo de CPU do processo da aplicação.
+---
 
-### Uso de Memória da API
+## Uso de Memória da API
+
+Mostra a quantidade de memória RAM residente utilizada pelo processo da aplicação.
 
 ```promql
 process_resident_memory_bytes{job="medical-api"}
 ```
 
-Apresenta a quantidade de memória RAM utilizada pelo processo da API.
+---
 
-### Erros da API — Últimos 5 Minutos
+## Erros da API — Últimos 5 Minutos
+
+Mostra respostas HTTP com status:
+
+```text
+4xx
+5xx
+```
+
+registradas nos últimos cinco minutos.
 
 ```promql
 sum(increase(api_requests_total{status_code=~"4..|5.."}[5m]))
 ```
 
-Apresenta a quantidade de respostas HTTP `4xx` e `5xx` registradas nos últimos cinco minutos.
-
-Em uma execução nova, esse painel pode inicialmente apresentar:
+Em uma execução nova, o painel pode inicialmente apresentar:
 
 ```text
 No data
 ```
 
-Isso é esperado caso nenhum erro tenha ocorrido.
+Isso é normal caso nenhuma requisição com erro tenha ocorrido.
 
 ---
 
-## 🧪 6. Testando o Monitoramento de Erros
+# 🧪 6. Testando o Painel de Erros
 
-Para testar o painel de erros, gere propositalmente uma requisição `404`.
+Para validar o monitoramento de erros, é possível gerar propositalmente uma requisição HTTP `404`.
 
 Acesse:
 
@@ -699,7 +594,7 @@ Acesse:
 http://localhost:8000/teste
 ```
 
-Como a rota `/teste` não existe, a FastAPI deverá retornar:
+A rota `/teste` não existe na aplicação. Portanto, a FastAPI deverá retornar:
 
 ```json
 {
@@ -713,11 +608,17 @@ com status:
 404 Not Found
 ```
 
-Atualize a página algumas vezes para gerar múltiplas requisições com erro.
+Atualize essa página algumas vezes para gerar múltiplas requisições.
 
-Depois aguarde aproximadamente **10 a 15 segundos** para que o Prometheus realize a coleta.
+Depois aguarde aproximadamente:
 
-Volte ao Grafana e clique em:
+```text
+10 a 15 segundos
+```
+
+para que o Prometheus realize a coleta.
+
+Volte ao dashboard do Grafana e clique em:
 
 ```text
 Refresh
@@ -729,15 +630,19 @@ O painel:
 Erros da API - Últimos 5 Minutos
 ```
 
-deverá apresentar os erros registrados.
+deverá começar a apresentar os erros registrados.
 
-Também é possível confirmar diretamente no Prometheus com:
+---
+
+## Confirmando o erro diretamente no Prometheus
+
+Também é possível consultar diretamente:
 
 ```promql
 api_requests_total{status_code="404"}
 ```
 
-Exemplo de resultado:
+Um resultado esperado é semelhante a:
 
 ```text
 api_requests_total{
@@ -747,55 +652,36 @@ api_requests_total{
 } 5
 ```
 
+O número apresentado representa a quantidade de requisições registradas para aquela série.
+
 ---
 
-## ✅ 7. Validação Final
+# ✅ Validação Final
 
-Ao final, o comportamento esperado é:
-
-```text
-FastAPI /health                      → funcionando
-FastAPI /metrics                     → funcionando
-Prometheus up                        → valor 1
-Taxa de Requisições                  → apresenta dados
-Latência Média                       → apresenta dados
-Uso de CPU                           → apresenta dados
-Uso de Memória                       → apresenta dados
-Erros da API                         → apresenta dados após gerar erros 404
-```
-
-### Resumo para reprodução
+Para confirmar o funcionamento completo do ambiente:
 
 ```text
-1. docker compose up --build
+FastAPI /health       → status "ok"
 
-2. Testar:
-   http://localhost:8000/health
-   http://localhost:8000/metrics
+FastAPI /metrics      → métricas disponíveis
 
-3. Acessar:
-   http://localhost:9090
+Prometheus
+up                    → valor 1
 
-   Executar:
-   up
+Grafana
+Taxa de Requisições   → apresenta dados
+Latência Média        → apresenta dados
+Uso de CPU            → apresenta dados
+Uso de Memória        → apresenta dados
 
-4. Acessar:
-   http://localhost:3000
-
-5. Login:
-   admin / admin
-
-6. Dashboards
-   → New
-   → Import
-
-7. Selecionar:
-   monitoring/grafana/medical-api-dashboard.json
-
-8. Para testar erros:
-   http://localhost:8000/teste
-
-9. Aguardar alguns segundos e atualizar o Grafana.
+/teste
+Erro HTTP 404         → registrado no painel de erros
 ```
 
-O Data Source do Prometheus é configurado automaticamente pelo projeto, portanto nenhuma configuração manual adicional é necessária.
+Com esses testes concluídos, a comunicação entre:
+
+```text
+FastAPI → Prometheus → Grafana
+```
+
+está funcionando corretamente.
