@@ -316,12 +316,6 @@ Após a inicialização:
 | Prometheus | http://localhost:9090 |
 | Grafana | http://localhost:3000 |
 
-Para finalizar a stack:
-
-```bash
-docker compose down
-```
-
 ---
 
 # 🩺 1. Verificando a FastAPI
