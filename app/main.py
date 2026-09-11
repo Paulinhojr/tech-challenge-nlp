@@ -1,7 +1,8 @@
 from pathlib import Path
 import time
 
-import joblib
+import numpy as np
+import onnxruntime as ort
 import pandas as pd
 from fastapi import FastAPI, Request, Response
 from prometheus_client import (
@@ -19,7 +20,8 @@ from pydantic import BaseModel
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-MODEL_PATH = BASE_DIR / "models" / "medical_classifier.pkl"
+#MODEL_PATH = BASE_DIR / "models" / "medical_classifier.pkl"
+MODEL_PATH = BASE_DIR / "models" / "medical_classifier.onnx"
 LABELS_PATH = BASE_DIR / "data" / "medical_tc_labels.csv"
 
 
@@ -27,7 +29,12 @@ LABELS_PATH = BASE_DIR / "data" / "medical_tc_labels.csv"
 # Carregamento do modelo
 # =========================
 
-model = joblib.load(MODEL_PATH)
+model = ort.InferenceSession(
+    str(MODEL_PATH),
+    providers=["CPUExecutionProvider"],
+)
+
+input_name = model.get_inputs()[0].name
 
 labels_df = pd.read_csv(LABELS_PATH)
 
@@ -125,7 +132,19 @@ def health():
 
 @app.post("/predict")
 def predict(request: PredictionRequest):
-    prediction = model.predict([request.text])[0]
+    input_data = np.array(
+        [[request.text]],
+        dtype=object,
+    )
+
+    outputs = model.run(
+        None,
+        {
+            input_name: input_data
+        },
+    )
+
+    prediction = int(outputs[0][0])
 
     classification = label_mapping[prediction]
 

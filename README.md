@@ -686,3 +686,371 @@ FastAPI → Prometheus → Grafana
 ```
 
 está funcionando corretamente.
+
+---
+
+# ⚡ Otimização do Modelo com ONNX
+
+Como etapa de otimização, o modelo original do projeto foi convertido do formato `PKL` do Scikit-learn para o formato **ONNX (Open Neural Network Exchange)**.
+
+O modelo original utiliza o pipeline:
+
+```text
+Texto médico
+    ↓
+TF-IDF Vectorizer
+    ↓
+Logistic Regression
+    ↓
+Classificação
+```
+
+Inicialmente, a API realizava as inferências utilizando:
+
+```text
+models/medical_classifier.pkl
+```
+
+Após a otimização, a aplicação passou a utilizar:
+
+```text
+models/medical_classifier.onnx
+```
+
+com execução através do **ONNX Runtime**.
+
+O modelo `.pkl` foi mantido no projeto como referência para comparação com a versão otimizada.
+
+---
+
+## 🔄 Conversão para ONNX
+
+O script responsável pela conversão está localizado em:
+
+```text
+scripts/convert_to_onnx.py
+```
+
+Para executar a conversão manualmente:
+
+```bash
+python scripts/convert_to_onnx.py
+```
+
+Ao final, será gerado:
+
+```text
+models/medical_classifier.onnx
+```
+
+O fluxo de conversão é:
+
+```text
+medical_classifier.pkl
+          │
+          ▼
+      skl2onnx
+          │
+          ▼
+medical_classifier.onnx
+```
+
+---
+
+## ✅ Validação da Conversão
+
+Após a conversão, foi realizada uma comparação entre as previsões do modelo original e do modelo ONNX utilizando todo o conjunto de teste.
+
+O script utilizado está disponível em:
+
+```text
+scripts/test_onnx.py
+```
+
+Para executar:
+
+```bash
+python scripts/test_onnx.py
+```
+
+Foram avaliados:
+
+```text
+2.888 abstracts médicos
+```
+
+Resultados obtidos:
+
+| Métrica | Resultado |
+| :--- | ---: |
+| Predições comparadas | 2.888 |
+| Predições iguais | 2.863 |
+| Concordância PKL x ONNX | **99,13%** |
+| Acurácia PKL | **55,57%** |
+| Acurácia ONNX | **55,75%** |
+
+A pequena diferença entre as previsões ocorre devido às diferenças de implementação entre os operadores utilizados pelo Scikit-learn e pelo ONNX Runtime.
+
+Apesar disso, a versão ONNX manteve desempenho preditivo equivalente ao modelo original, sem redução de acurácia no conjunto de teste.
+
+---
+
+## 🚀 Benchmark — PKL vs ONNX
+
+Também foi realizado um benchmark para comparar o tempo de inferência entre as duas versões.
+
+O script utilizado está disponível em:
+
+```text
+scripts/benchmark_onnx.py
+```
+
+Para executar:
+
+```bash
+python scripts/benchmark_onnx.py
+```
+
+O teste foi realizado com **500 inferências individuais**, simulando o comportamento do endpoint `/predict`, que processa um texto por requisição.
+
+### Resultados
+
+| Métrica | PKL | ONNX |
+| :--- | ---: | ---: |
+| Latência média | 0,398 ms | **0,102 ms** |
+| Mediana | 0,373 ms | **0,097 ms** |
+| Menor tempo | 0,247 ms | **0,054 ms** |
+| Maior tempo | 0,947 ms | **0,297 ms** |
+| P95 | 0,599 ms | **0,159 ms** |
+| Tamanho do modelo | 0,76 MB | **0,47 MB** |
+
+### Ganho obtido
+
+A versão ONNX apresentou aproximadamente:
+
+```text
+74,39% de redução na latência média
+```
+
+Isso representa uma execução aproximadamente:
+
+```text
+3,9x mais rápida
+```
+
+Além disso, o tamanho do modelo foi reduzido de:
+
+```text
+0,76 MB
+```
+
+para:
+
+```text
+0,47 MB
+```
+
+representando uma redução aproximada de:
+
+```text
+38%
+```
+
+---
+
+## 🔌 API utilizando ONNX Runtime
+
+Após a validação do modelo otimizado, a FastAPI foi alterada para utilizar diretamente:
+
+```text
+models/medical_classifier.onnx
+```
+
+através do:
+
+```text
+ONNX Runtime
+```
+
+O fluxo final da aplicação passou a ser:
+
+```text
+POST /predict
+      │
+      ▼
+FastAPI
+      │
+      ▼
+ONNX Runtime
+      │
+      ▼
+medical_classifier.onnx
+      │
+      ▼
+Classificação médica
+```
+
+O endpoint continua sendo utilizado da mesma forma:
+
+```text
+POST /predict
+```
+
+Exemplo:
+
+```json
+{
+  "text": "Does carotid restenosis predict an increased risk of stroke?"
+}
+```
+
+Exemplo de resposta:
+
+```json
+{
+  "classification": "nervous system diseases"
+}
+```
+
+---
+
+# 🧪 Como validar a otimização
+
+Caso seja necessário reproduzir os testes da Etapa 4, execute na raiz do projeto:
+
+### 1. Validar a equivalência entre os modelos
+
+```bash
+python scripts/test_onnx.py
+```
+
+O resultado esperado deve apresentar aproximadamente:
+
+```text
+Predições comparadas: 2888
+Predições iguais: 2863
+Concordância: 99.13%
+
+ACURÁCIA NO CONJUNTO DE TESTE
+PKL:  55.57%
+ONNX: 55.75%
+```
+
+---
+
+### 2. Executar o benchmark
+
+```bash
+python scripts/benchmark_onnx.py
+```
+
+Os valores podem apresentar pequenas variações dependendo do hardware utilizado.
+
+No ambiente utilizado durante o desenvolvimento, foram obtidos aproximadamente:
+
+```text
+PKL
+Média: 0.398 ms
+
+ONNX
+Média: 0.102 ms
+
+Ganho de desempenho:
+74.39%
+```
+
+---
+
+# 🐳 Validando a API otimizada com Docker
+
+Para validar a versão final da aplicação nas mesmas condições de execução do projeto:
+
+```bash
+docker compose up --build
+```
+
+Após os containers iniciarem, acesse:
+
+```text
+http://localhost:8000/docs
+```
+
+No endpoint:
+
+```text
+POST /predict
+```
+
+clique em:
+
+```text
+Try it out
+```
+
+e utilize:
+
+```json
+{
+  "text": "Does carotid restenosis predict an increased risk of stroke?"
+}
+```
+
+Clique em:
+
+```text
+Execute
+```
+
+O resultado esperado é uma resposta HTTP:
+
+```text
+200 OK
+```
+
+com uma classificação semelhante a:
+
+```json
+{
+  "classification": "nervous system diseases"
+}
+```
+
+Também podem ser validados novamente os endpoints de observabilidade:
+
+```text
+http://localhost:8000/health
+http://localhost:8000/metrics
+http://localhost:9090
+http://localhost:3000
+```
+
+Dessa forma, é possível validar que a API otimizada com ONNX continua integrada normalmente ao ambiente com **Prometheus e Grafana**.
+
+---
+
+## 📊 Resumo da Otimização
+
+```text
+Modelo original:
+Scikit-learn + PKL
+        ↓
+Conversão com skl2onnx
+        ↓
+Modelo ONNX
+        ↓
+ONNX Runtime
+        ↓
+FastAPI
+```
+
+Resultados obtidos:
+
+```text
+Concordância entre modelos: 99,13%
+Acurácia PKL:               55,57%
+Acurácia ONNX:              55,75%
+Redução da latência média:  74,39%
+Redução do tamanho:         ~38%
+API utilizando ONNX:        OK
+Execução via Docker:        OK
+```
