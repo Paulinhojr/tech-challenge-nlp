@@ -459,11 +459,18 @@ Esse arquivo cria automaticamente o Data Source:
 prometheus
 ```
 
-utilizando internamente:
+O diretório dentro do grafana para acessar o Data Source:
+
+```text
+Connections - Data Sources - prometheus - Connection
+```
+
+E na aba Connection (prometheus server URL) copia e cola:
 
 ```text
 http://prometheus:9090
 ```
+Depois desce a pagina para salvar a configuração
 
 Caso seja necessário verificar a configuração:
 
